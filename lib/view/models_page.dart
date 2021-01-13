@@ -183,14 +183,13 @@ class ModelsDataTableSource extends HiveDataTableSource<Model> {
 
 class ModelsFormState extends GetxController {
   final model = Model().obs;
-  final isNew = false.obs;
+  final isNew = true.obs;
 
   ModelsFormState() : super() {
-    model.value = Get.arguments as Model;
-    if (model.value.name == null) {
-      isNew.value = true;
-    } else {
+    var arg = Get.arguments as Model;
+    if (arg.key != null) {
       isNew.value = false;
+      model.value = arg;
     }
   }
 }
@@ -236,7 +235,6 @@ class ModelsFormPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(controller.isNew.value);
     return Scaffold(
       appBar: AppBar(
         title: controller.isNew() ? Text(pageTitleCreate) : Text(pageTitleEdit),
