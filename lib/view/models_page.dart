@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:gm/common/validate.dart';
 import 'package:gm/data/database_objects.dart';
 import 'package:gm/data/datatables.dart';
 import 'package:gm/widgets/notifications.dart';
@@ -228,11 +229,6 @@ class ModelsFormPage extends StatelessWidget {
     );
   }
 
-  String validateString(String string) {
-    if (string.isEmpty) return 'Campo no puede estar vacio';
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -266,7 +262,7 @@ class ModelsFormPage extends StatelessWidget {
                         border: OutlineInputBorder(),
                         icon: Icon(Icons.view_headline)),
                     initialValue: controller.model.value.name,
-                    validator: (value) => validateString(value),
+                    validator: (value) => FormValidator.emptyField(value),
                     onChanged: (value) => controller.model.value.name = value,
                   ),
                   SizedBox(
@@ -278,7 +274,7 @@ class ModelsFormPage extends StatelessWidget {
                         border: OutlineInputBorder(),
                         icon: Icon(Icons.topic)),
                     initialValue: controller.model.value.blueprint,
-                    validator: (value) => validateString(value),
+                    validator: (value) => FormValidator.emptyField(value),
                     onChanged: (value) =>
                         controller.model.value.blueprint = value,
                   ),
