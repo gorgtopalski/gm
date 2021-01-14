@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get_navigation/get_navigation.dart';
 import 'package:gm/data/hive_seed.dart';
 import 'package:gm/view/dashboard.dart';
-import 'package:gm/view/models_page.dart';
-import 'package:gm/view/users_page.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
@@ -32,19 +30,6 @@ void logging() {
 Future<void> locale() async {
   Intl.defaultLocale = 'es';
   await initializeDateFormatting('es', null);
-}
-
-// Generate the navigation routes used by getX
-List<GetPage> pages() {
-  return <GetPage>[
-    GetPage(name: '/', page: () => DashboardPage()),
-    GetPage(name: '/models', page: () => ModelsPage()),
-    GetPage(
-        name: '/models/form',
-        page: () => ModelsFormPage(),
-        binding: ModelsFormBinding()),
-    GetPage(name: '/users', page: () => UsersPage()),
-  ];
 }
 
 // Generate the application theming
@@ -96,9 +81,10 @@ Future<void> main() async {
 
   info('Start flutter application');
   runApp(GetMaterialApp(
-    getPages: pages(),
+    getPages: GreaseMonkeyRouting.routes(),
     theme: generateTheme(),
     title: "Grease Monkey",
+    home: DashboardPage(),
     debugShowCheckedModeBanner: false,
   ));
 }
