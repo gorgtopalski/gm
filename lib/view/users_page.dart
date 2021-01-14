@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:gm/common/validate.dart';
 import 'package:gm/data/database_objects.dart';
 import 'package:gm/data/datatables.dart';
 import 'package:gm/widgets/notifications.dart';
 import 'package:hive/hive.dart';
 
-class UsersController extends GetxController {
+class UsersPageController extends GetxController {
   //The amount of rows for each page, initial value 10
   final rowsPerPage = PaginatedDataTable.defaultRowsPerPage.obs;
 
@@ -19,8 +20,8 @@ class UsersController extends GetxController {
   final showSearchBar = false.obs;
 }
 
-class UsersDataTableSource extends HiveDataTableSource<User> {
-  UsersDataTableSource() : super(hiveBox: Hive.box<User>('users'));
+class UsersPageSource extends HiveDataTableSource<User> {
+  UsersPageSource() : super(hiveBox: Hive.box<User>('users'));
 
   @override
   DataRow toGetRow(int index) {
@@ -28,7 +29,9 @@ class UsersDataTableSource extends HiveDataTableSource<User> {
 
     return DataRow.byIndex(
       index: index,
-      onSelectChanged: (_) async {},
+      onSelectChanged: (_) async {
+        Get.toNamed('/users/${user.key}');
+      },
       cells: user.asDataCells(),
     );
   }
@@ -49,10 +52,10 @@ class UsersPage extends StatelessWidget {
   static final String pageTitle = 'Usuarios';
 
   // Access the page state with getX
-  final controller = Get.put(UsersController());
+  final controller = Get.find<UsersPageController>();
 
   // Access the datasource for the data table
-  final dataSource = UsersDataTableSource();
+  final dataSource = Get.find<UsersPageSource>();
 
   // Sort method for the column
   void _sort<T>(
@@ -74,7 +77,7 @@ class UsersPage extends StatelessWidget {
         icon: Icon(Icons.add),
         tooltip: addTooltip,
         onPressed: () {
-          Get.toNamed('/users/form', arguments: new User());
+          Get.toNamed('/users/');
           dataSource.syncDb();
         },
       ),
@@ -164,5 +167,150 @@ class UsersPage extends StatelessWidget {
             ],
           ),
         ));
+  }
+}
+
+class UserFormController extends GetxController {
+  final user = User().obs;
+  final isNew = true.obs;
+
+  UserFormController() : super() {
+    var id = Get.parameters['id'];
+    if (id.isNotEmpty) {
+      var key = num.tryParse(id);
+      var box = Hive.box<User>('users');
+      if (box.containsKey(key)) {
+        user.value = box.get(key);
+        isNew.toggle();
+      }
+    }
+  }
+}
+
+class UsersFormPage extends StatelessWidget {
+  final controller = Get.find<UserFormController>();
+  final formKey = GlobalKey<FormState>();
+
+  static final String pageTitleCreate = "Añadir usuario";
+  static final String pageTitleEdit = "Editar usuario";
+  static final String saveTooltipText = "Guardar";
+  static final String cancelTootltipText = "Cancelar";
+
+  void onFormSubmit() async {
+    if (formKey.currentState.validate()) {
+      if (!controller.user.value.isInBox) {
+        await Hive.box<User>('users').add(controller.user.value);
+      } else {
+        await controller.user.value.save();
+      }
+      Get.back(result: true);
+    }
+  }
+
+  void _delete() async {
+    Get.defaultDialog(
+      radius: 10,
+      title: "Borrar registro",
+      middleText: "Desea borrar ${controller.user} ?",
+      textConfirm: "Si",
+      textCancel: "No",
+      onConfirm: () async {
+        await controller.user().delete();
+        Get.offAndToNamed('/');
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: controller.isNew() ? Text(pageTitleCreate) : Text(pageTitleEdit),
+        actions: [
+          Visibility(
+            visible: !controller.isNew(),
+            child: FlatButton.icon(
+                onPressed: _delete,
+                icon: Icon(Icons.delete),
+                label: Text("Borrar")),
+          ),
+        ],
+      ),
+      body: Form(
+        key: formKey,
+        child: Scrollbar(
+          child: SingleChildScrollView(
+              child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    height: 12,
+                  ),
+                  TextFormField(
+                    decoration: InputDecoration(
+                        labelText: "Nombre",
+                        border: OutlineInputBorder(),
+                        icon: Icon(Icons.view_headline)),
+                    initialValue: controller.user.value.name,
+                    validator: (value) => FormValidator.emptyField(value),
+                    onChanged: (value) => controller.user.value.name = value,
+                  ),
+                  SizedBox(
+                    height: 24,
+                  ),
+                  TextFormField(
+                    decoration: InputDecoration(
+                        labelText: "Apellidos",
+                        border: OutlineInputBorder(),
+                        icon: Icon(Icons.topic)),
+                    initialValue: controller.user.value.surename,
+                    validator: (value) => FormValidator.emptyField(value),
+                    onChanged: (value) =>
+                        controller.user.value.surename = value,
+                  ),
+                  SizedBox(
+                    height: 24,
+                  ),
+                  TextFormField(
+                    decoration: InputDecoration(
+                        labelText: "Equipo",
+                        border: OutlineInputBorder(),
+                        icon: Icon(Icons.topic)),
+                    initialValue: controller.user.value.team.toString(),
+                    validator: (value) =>
+                        FormValidator.fieldMustBeNumber(value),
+                    onChanged: (value) =>
+                        controller.user.value.team = int.tryParse(value) ?? 0,
+                  ),
+                  SizedBox(
+                    height: 12,
+                  ),
+                  ButtonBarTheme(
+                    data: Theme.of(context).buttonBarTheme,
+                    child: ButtonBar(
+                        alignment: MainAxisAlignment.end,
+                        layoutBehavior: ButtonBarLayoutBehavior.constrained,
+                        mainAxisSize: MainAxisSize.max,
+                        buttonHeight: 50,
+                        children: [
+                          FlatButton.icon(
+                              onPressed: onFormSubmit,
+                              icon: Icon(Icons.save),
+                              label: Text("Guardar")),
+                          FlatButton.icon(
+                              onPressed: () {
+                                Get.back(result: false);
+                              },
+                              icon: Icon(Icons.cancel),
+                              label: Text("Cancelar")),
+                        ]),
+                  ),
+                ]),
+          )),
+        ),
+      ),
+    );
   }
 }
