@@ -65,7 +65,7 @@ class User extends HiveObject implements Filtrable, AsDataCells {
   @HiveField(2)
   int team;
 
-  User({this.name, this.surename, this.team}) : assert(team > 0 && team <= 5);
+  User({this.name, this.surename, this.team});
 
   @override
   String toString() {
