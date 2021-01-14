@@ -7,7 +7,7 @@ import 'package:gm/widgets/notifications.dart';
 import 'package:hive/hive.dart';
 
 //State for the page that displays the model data table
-class ModelsDataTableController extends GetxController {
+class ModelsPageController extends GetxController {
   //The amount of rows for each page, initial value 10
   final rowsPerPage = PaginatedDataTable.defaultRowsPerPage.obs;
 
@@ -40,10 +40,10 @@ class ModelsPage extends StatelessWidget {
   static final String pageTitle = 'Modelos';
 
   // Access the page state with getX
-  final controller = Get.put(ModelsDataTableController());
+  final controller = Get.find<ModelsPageController>();
 
   // Access the datasource for the data table
-  final dataSource = ModelsDataTableSource();
+  final dataSource = Get.find<ModelsPageSource>();
 
   // Sort method for the column
   void _sort<T>(
@@ -65,7 +65,8 @@ class ModelsPage extends StatelessWidget {
         icon: Icon(Icons.add),
         tooltip: addTooltip,
         onPressed: () {
-          Get.toNamed('/models/form', arguments: new Model());
+          Get.toNamed('/models/');
+          //Get.to(ModelsFormPage(), arguments: new Model());
           dataSource.syncDb();
         },
       ),
@@ -162,19 +163,20 @@ class ModelsPage extends StatelessWidget {
 }
 
 // Data table source for the models page
-class ModelsDataTableSource extends HiveDataTableSource<Model> {
-  ModelsDataTableSource() : super(hiveBox: Hive.box<Model>('models'));
+class ModelsPageSource extends HiveDataTableSource<Model> {
+  ModelsPageSource() : super(hiveBox: Hive.box<Model>('models'));
 
   @override
   DataRow toGetRow(int index) {
     var model = list[index];
 
+    // TODO check sync
     return DataRow.byIndex(
       index: index,
       cells: model.asDataCells(),
       onSelectChanged: (_) async {
-        var q = await Get.toNamed('/models/form', arguments: model);
-        if (q != null && q) {
+        var q = await Get.toNamed('/models/${model.key}');
+        if (q ?? false) {
           syncDb();
         }
       },
@@ -182,22 +184,26 @@ class ModelsDataTableSource extends HiveDataTableSource<Model> {
   }
 }
 
-class ModelsFormState extends GetxController {
+class ModelsFormController extends GetxController {
   final model = Model().obs;
   final isNew = true.obs;
 
-  ModelsFormState() : super() {
-    var arg = Get.arguments as Model;
-    if (arg.key != null) {
-      isNew.value = false;
-      model.value = arg;
+  ModelsFormController() : super() {
+    var id = Get.parameters['id'];
+    if (id.isNotEmpty) {
+      var key = num.tryParse(id);
+      var box = Hive.box<Model>('models');
+      if (box.containsKey(key)) {
+        model.value = box.get(key);
+        isNew.toggle();
+      }
     }
   }
 }
 
 class ModelsFormPage extends StatelessWidget {
   final formKey = GlobalKey<FormState>();
-  final controller = Get.find<ModelsFormState>();
+  final controller = Get.find<ModelsFormController>();
 
   static final String pageTitleCreate = "Crear modelo";
   static final String pageTitleEdit = "Editar modelo";
