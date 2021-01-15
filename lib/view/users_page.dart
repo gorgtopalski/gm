@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:gm/common/validate.dart';
 import 'package:gm/data/database_objects.dart';
 import 'package:gm/data/datatables.dart';
+import 'package:gm/widgets/buttons.dart';
 import 'package:gm/widgets/notifications.dart';
 import 'package:hive/hive.dart';
 
@@ -287,25 +288,9 @@ class UsersFormPage extends StatelessWidget {
                   SizedBox(
                     height: 12,
                   ),
-                  ButtonBarTheme(
-                    data: Theme.of(context).buttonBarTheme,
-                    child: ButtonBar(
-                        alignment: MainAxisAlignment.end,
-                        layoutBehavior: ButtonBarLayoutBehavior.constrained,
-                        mainAxisSize: MainAxisSize.max,
-                        buttonHeight: 50,
-                        children: [
-                          FlatButton.icon(
-                              onPressed: onFormSubmit,
-                              icon: Icon(Icons.save),
-                              label: Text("Guardar")),
-                          FlatButton.icon(
-                              onPressed: () {
-                                Get.back(result: false);
-                              },
-                              icon: Icon(Icons.cancel),
-                              label: Text("Cancelar")),
-                        ]),
+                  SaveCancelButtonBar(
+                    onSave: onFormSubmit,
+                    onCancel: () => Get.back(result: false),
                   ),
                 ]),
           )),
