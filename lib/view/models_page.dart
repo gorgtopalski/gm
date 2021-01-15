@@ -171,13 +171,14 @@ class ModelsPageSource extends HiveDataTableSource<Model> {
   DataRow toGetRow(int index) {
     var model = list[index];
 
-    // TODO check sync
     return DataRow.byIndex(
       index: index,
       cells: model.asDataCells(),
       onSelectChanged: (_) async {
-        var q = await Get.toNamed('/models/${model.key}');
-        if (q ?? false) {
+        var result = await Get.toNamed('/models/${model.key}');
+
+        // if the value was modified, resync db values
+        if (result ?? false) {
           syncDb();
         }
       },
