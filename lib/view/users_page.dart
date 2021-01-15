@@ -30,10 +30,15 @@ class UsersPageSource extends HiveDataTableSource<User> {
 
     return DataRow.byIndex(
       index: index,
-      onSelectChanged: (_) async {
-        Get.toNamed('/users/${user.key}');
-      },
       cells: user.asDataCells(),
+      onSelectChanged: (_) async {
+        var result = await Get.toNamed('/users/${user.key}');
+
+        // if the value was modified, resync db values
+        if (result ?? false) {
+          syncDb();
+        }
+      },
     );
   }
 }
@@ -75,11 +80,13 @@ class UsersPage extends StatelessWidget {
     // Page actions action
     final actions = <Widget>[
       IconButton(
-        icon: Icon(Icons.add),
+        icon: Icon(Icons.person_add),
         tooltip: addTooltip,
-        onPressed: () {
-          Get.toNamed('/users/');
-          dataSource.syncDb();
+        onPressed: () async {
+          var result = await Get.toNamed('/users/');
+          if (result ?? false) {
+            dataSource.syncDb();
+          }
         },
       ),
       Obx(
@@ -199,10 +206,10 @@ class UsersFormPage extends StatelessWidget {
 
   void onFormSubmit() async {
     if (formKey.currentState.validate()) {
-      if (!controller.user.value.isInBox) {
-        await Hive.box<User>('users').add(controller.user.value);
+      if (!controller.user().isInBox) {
+        await Hive.box<User>('users').add(controller.user());
       } else {
-        await controller.user.value.save();
+        await controller.user().save();
       }
       Get.back(result: true);
     }
@@ -253,10 +260,10 @@ class UsersFormPage extends StatelessWidget {
                     decoration: InputDecoration(
                         labelText: "Nombre",
                         border: OutlineInputBorder(),
-                        icon: Icon(Icons.view_headline)),
+                        icon: Icon(Icons.person)),
                     initialValue: controller.user.value.name,
                     validator: (value) => FormValidator.emptyField(value),
-                    onChanged: (value) => controller.user.value.name = value,
+                    onChanged: (value) => controller.user().name = value,
                   ),
                   SizedBox(
                     height: 24,
@@ -265,25 +272,46 @@ class UsersFormPage extends StatelessWidget {
                     decoration: InputDecoration(
                         labelText: "Apellidos",
                         border: OutlineInputBorder(),
-                        icon: Icon(Icons.topic)),
+                        icon: Icon(Icons.person_outline)),
                     initialValue: controller.user.value.surename,
                     validator: (value) => FormValidator.emptyField(value),
-                    onChanged: (value) =>
-                        controller.user.value.surename = value,
+                    onChanged: (value) => controller.user().surename = value,
                   ),
                   SizedBox(
                     height: 24,
                   ),
-                  TextFormField(
+                  DropdownButtonFormField(
+                    value: controller.user().team,
                     decoration: InputDecoration(
-                        labelText: "Equipo",
+                        labelText: 'Equipo',
                         border: OutlineInputBorder(),
-                        icon: Icon(Icons.topic)),
-                    initialValue: controller.user.value.team.toString(),
-                    validator: (value) =>
-                        FormValidator.fieldMustBeNumber(value),
-                    onChanged: (value) =>
-                        controller.user.value.team = int.tryParse(value) ?? 0,
+                        icon: Icon(Icons.people)),
+                    items: <DropdownMenuItem<int>>[
+                      DropdownMenuItem(
+                        child: Text('1'),
+                        value: 1,
+                      ),
+                      DropdownMenuItem(
+                        child: Text('2'),
+                        value: 2,
+                      ),
+                      DropdownMenuItem(
+                        child: Text('3'),
+                        value: 3,
+                      ),
+                      DropdownMenuItem(
+                        child: Text('4'),
+                        value: 4,
+                      ),
+                      DropdownMenuItem(
+                        child: Text('5'),
+                        value: 5,
+                      ),
+                    ],
+                    validator: (field) => FormValidator.selectField(field),
+                    onChanged: (int value) {
+                      controller.user().team = value;
+                    },
                   ),
                   SizedBox(
                     height: 12,
