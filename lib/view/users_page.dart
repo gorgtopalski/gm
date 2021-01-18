@@ -3,9 +3,9 @@ import 'package:get/get.dart';
 import 'package:gm/common/validate.dart';
 import 'package:gm/data/database_objects.dart';
 import 'package:gm/data/datatables.dart';
+import 'package:gm/data/db.dart';
 import 'package:gm/widgets/buttons.dart';
 import 'package:gm/widgets/notifications.dart';
-import 'package:hive/hive.dart';
 
 class UsersPageController extends GetxController {
   //The amount of rows for each page, initial value 10
@@ -22,7 +22,7 @@ class UsersPageController extends GetxController {
 }
 
 class UsersPageSource extends HiveDataTableSource<User> {
-  UsersPageSource() : super(hiveBox: Hive.box<User>('users'));
+  UsersPageSource() : super(hiveBox: Db.users);
 
   @override
   DataRow toGetRow(int index) {
@@ -186,7 +186,7 @@ class UserFormController extends GetxController {
     var id = Get.parameters['id'];
     if (id.isNotEmpty) {
       var key = num.tryParse(id);
-      var box = Hive.box<User>('users');
+      var box = Db.users;
       if (box.containsKey(key)) {
         user.value = box.get(key);
         isNew.toggle();
@@ -207,7 +207,7 @@ class UsersFormPage extends StatelessWidget {
   void onFormSubmit() async {
     if (formKey.currentState.validate()) {
       if (!controller.user().isInBox) {
-        await Hive.box<User>('users').add(controller.user());
+        await Db.users.add(controller.user());
       } else {
         await controller.user().save();
       }

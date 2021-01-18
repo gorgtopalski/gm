@@ -3,9 +3,10 @@ import 'package:get/get.dart';
 import 'package:gm/common/validate.dart';
 import 'package:gm/data/database_objects.dart';
 import 'package:gm/data/datatables.dart';
+import 'package:gm/data/db.dart';
 import 'package:gm/widgets/buttons.dart';
 import 'package:gm/widgets/notifications.dart';
-import 'package:hive/hive.dart';
+//import 'package:hive/hive.dart';
 
 //State for the page that displays the model data table
 class ModelsPageController extends GetxController {
@@ -165,7 +166,7 @@ class ModelsPage extends StatelessWidget {
 
 // Data table source for the models page
 class ModelsPageSource extends HiveDataTableSource<Model> {
-  ModelsPageSource() : super(hiveBox: Hive.box<Model>('models'));
+  ModelsPageSource() : super(hiveBox: Db.models);
 
   @override
   DataRow toGetRow(int index) {
@@ -194,7 +195,7 @@ class ModelsFormController extends GetxController {
     var id = Get.parameters['id'];
     if (id.isNotEmpty) {
       var key = num.tryParse(id);
-      var box = Hive.box<Model>('models');
+      var box = Db.models;
       if (box.containsKey(key)) {
         model.value = box.get(key);
         isNew.toggle();
@@ -215,7 +216,7 @@ class ModelsFormPage extends StatelessWidget {
   void onFormSubmit() async {
     if (formKey.currentState.validate()) {
       if (!controller.model.value.isInBox) {
-        await Hive.box<Model>('models').add(controller.model.value);
+        await Db.models.add(controller.model.value);
       } else {
         await controller.model.value.save();
       }
