@@ -60,12 +60,12 @@ Future<void> setupHive() async {
   var seeder = HiveSeeder();
 
   info("Open models box");
-  Hive.openBox<Model>('models')
-      .then((value) => value.isEmpty ? seeder.seedModels() : null);
+  var model = await Hive.openBox<Model>('models');
+  if (model.isEmpty) seeder.seedModels();
 
   info("Open users box");
-  Hive.openBox<User>('users')
-      .then((value) => value.isEmpty ? seeder.seedUsers() : null);
+  var users = await Hive.openBox<User>('users');
+  if (users.isEmpty) seeder.seedUsers();
 }
 
 // Flutter main method
